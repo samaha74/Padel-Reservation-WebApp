@@ -15,3 +15,6 @@ thumbs.db
 # IDE Settings
 .vscode/
 .idea/
+
+postman/
+.postman/
