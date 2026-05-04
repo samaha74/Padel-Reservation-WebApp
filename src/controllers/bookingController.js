@@ -70,17 +70,52 @@ exports.getBookingById = async (req, res) => {
     }
 }
 
-// Get Booking by date
+// Get Booking by date for a specific court
 exports.getBookingsByDate = async (req, res) => {
     try {
-        const { date } = req.query;
+        // 1. Get both date and courtId from the query string
+        const { date, courtId } = req.query;
+
+        if (!courtId) {
+            return res.status(400).json({ message: "courtId is required to filter bookings." });
+        }
+
         const startOfDay = new Date(date);
         startOfDay.setHours(0, 0, 0, 0);
+        
         const endOfDay = new Date(date);
         endOfDay.setHours(23, 59, 59, 999);
-        const bookings = await booking.find({
-            startTime: { $gte: startOfDay, $lte: endOfDay }
-        }).populate('user', 'name email').populate('court');
+
+        // 2. Add court to the filter object
+        const bookings = await Booking.find({
+            court: courtId, // Filter by the specific court
+            startTime: { $gte: startOfDay, $lte: endOfDay },
+            status: { $ne: 'Cancelled' } // Usually, you don't want to show cancelled ones as "busy"
+        })
+        .populate('user', 'name email')
+        .populate('court');
+
+        res.status(200).json(bookings);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Get Booking by user id
+exports.getBookingsByUserId = async (req, res) => {
+    try {
+        const bookings = await booking.find({ user: req.user._id }).populate('court');
+        res.status(200).json(bookings);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+//Get booking by court id
+exports.getBookingsByCourtId = async (req, res) => {
+    try {
+        const { courtId } = req.query;
+        const bookings = await booking.find({ court: courtId,}).populate('user', 'name email').populate('court');
         res.status(200).json(bookings);
     } catch (error) {
         res.status(500).json({ message: error.message });
