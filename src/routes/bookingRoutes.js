@@ -11,11 +11,15 @@ router.get('/', bookingController.getAllBookings);
 // Get booking by ID
 router.get('/:id', bookingController.getBookingById);
 
+// Get booking by date
+router.get('/date', bookingController.getBookingsByDate);
+
 // Update booking
 router.put('/:id', BookingIsValid, bookingController.updateBooking);
 
 // Cancel booking
 router.delete('/:id', bookingController.cancelBooking);
+
 
 //
 //waiting for Nour's implementation of authentication middleware to protect the routes

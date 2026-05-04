@@ -71,6 +71,23 @@ exports.getBookingById = async (req, res) => {
     }
 }
 
+// Get Booking by date
+exports.getBookingsByDate = async (req, res) => {
+    try {
+        const { date } = req.query;
+        const startOfDay = new Date(date);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(date);
+        endOfDay.setHours(23, 59, 59, 999);
+        const bookings = await booking.find({
+            startTime: { $gte: startOfDay, $lte: endOfDay }
+        }).populate('user', 'name email').populate('court');
+        res.status(200).json(bookings);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
 // Cancel booking
 exports.cancelBooking = async (req, res) => {
     try {
