@@ -1,6 +1,9 @@
 const router = require('express').Router();
 const bookingController = require('../controllers/bookingController');
 const { BookingIsValid } = require('../middleware/BookingValidation');
+const { authenticate } = require('../middleware/authMiddleware');
+
+router.use(authenticate);
 
 // Create a new booking
 router.post('/', BookingIsValid, bookingController.createBooking);

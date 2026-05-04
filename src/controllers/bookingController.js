@@ -2,28 +2,22 @@ const booking = require('../models/Booking');
 const { BookingIsValid } = require('../middleware/BookingValidation');
 
 // Create a new booking
-exports.createBooking = async (req, res, next) => {
+exports.createBooking = async (req, res) => {
     try {
-        // Check if the user is authenticated (Waiting for Nour's implementation of authentication middleware)
         if (!req.user) {
             return res.status(401).json({ message: 'User not authenticated' });
         }
 
-        // Validate input
-        BookingIsValid(req, res, () => {});
+        const courtId = req.body.courtId || req.body.court;
+        const { startTime, endTime, totalPrice } = req.body;
 
-
-        const { user, court, startTime, endTime, totalPrice } = req.body;
-
-
-        // Check for overlapping bookings for the same court
         const overlappingBooking = await booking.findOne({
-            court: req.body.courtId,
+            court: courtId,
             status: { $ne: 'Cancelled' },
             $or: [
                 {
-                    startTime: { $lt: req.body.endTime },
-                    endTime: { $gt: req.body.startTime }
+                    startTime: { $lt: endTime },
+                    endTime: { $gt: startTime }
                 }
             ]
         });
@@ -33,8 +27,8 @@ exports.createBooking = async (req, res, next) => {
         }
 
         const newBooking = new booking({
-            user: req.user._id, 
-            court: req.body.courtId,
+            user: req.user._id,
+            court: courtId,
             startTime,
             endTime,
             totalPrice
@@ -42,8 +36,7 @@ exports.createBooking = async (req, res, next) => {
 
         await newBooking.save();
         res.status(201).json(newBooking);
-    } 
-    catch (error) {
+    } catch (error) {
         res.status(400).json({ message: error.message });
     }
 }
@@ -51,7 +44,8 @@ exports.createBooking = async (req, res, next) => {
 // GetAll bookings
 exports.getAllBookings = async (req, res) => {
     try {
-        const bookings = await booking.find().populate('user', 'name email').populate('court', 'name location');
+        const filter = req.user.role === 'Admin' ? {} : { user: req.user._id };
+        const bookings = await booking.find(filter).populate('user', 'name email').populate('court', 'name location');
         res.status(200).json(bookings);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -61,11 +55,16 @@ exports.getAllBookings = async (req, res) => {
 // Get booking by ID
 exports.getBookingById = async (req, res) => {
     try {
-        const booking = await booking.findById(req.params.id).populate('user', 'name email').populate('court');
-        if (!booking) {
+        const foundBooking = await booking.findById(req.params.id).populate('user', 'name email').populate('court');
+        if (!foundBooking) {
             return res.status(404).json({ message: 'Booking not found' });
         }
-        res.status(200).json(booking);
+
+        if (!foundBooking.user._id.equals(req.user._id) && req.user.role !== 'Admin') {
+            return res.status(403).json({ message: 'Forbidden: Access denied' });
+        }
+
+        res.status(200).json(foundBooking);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -91,12 +90,17 @@ exports.getBookingsByDate = async (req, res) => {
 // Cancel booking
 exports.cancelBooking = async (req, res) => {
     try {
-        const booking = await booking.findById(req.params.id);
-        if (!booking) {
+        const foundBooking = await booking.findById(req.params.id);
+        if (!foundBooking) {
             return res.status(404).json({ message: 'Booking not found' });
         }
-        booking.status = 'Cancelled';
-        await booking.save();
+
+        if (!foundBooking.user.equals(req.user._id) && req.user.role !== 'Admin') {
+            return res.status(403).json({ message: 'Forbidden: Access denied' });
+        }
+
+        foundBooking.status = 'Cancelled';
+        await foundBooking.save();
         res.status(200).json({ message: 'Booking cancelled successfully' });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -106,19 +110,22 @@ exports.cancelBooking = async (req, res) => {
 // Update booking
 exports.updateBooking = async (req, res) => {
     try {
-        const booking = await booking.findById(req.params.id);
-        if (!booking) {
+        const foundBooking = await booking.findById(req.params.id);
+        if (!foundBooking) {
             return res.status(404).json({ message: 'Booking not found' });
         }
-        // Validate input
-        BookingIsValid(req, res, () => {});
-        const { court, startTime, endTime, totalPrice } = req.body;
-        booking.court = court || booking.court;
-        booking.startTime = startTime || booking.startTime;
-        booking.endTime = endTime || booking.endTime;
-        booking.totalPrice = totalPrice || booking.totalPrice;
-        await booking.save();
-        res.status(200).json(booking);
+
+        if (!foundBooking.user.equals(req.user._id) && req.user.role !== 'Admin') {
+            return res.status(403).json({ message: 'Forbidden: Access denied' });
+        }
+
+        const { courtId, court, startTime, endTime, totalPrice } = req.body;
+        foundBooking.court = courtId || court || foundBooking.court;
+        foundBooking.startTime = startTime || foundBooking.startTime;
+        foundBooking.endTime = endTime || foundBooking.endTime;
+        foundBooking.totalPrice = totalPrice || foundBooking.totalPrice;
+        await foundBooking.save();
+        res.status(200).json(foundBooking);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

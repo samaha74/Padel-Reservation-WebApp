@@ -2,7 +2,8 @@ const booking = require('../models/Booking');
 
 
 exports.BookingIsValid = (req, res, next) => {
-    const { court, startTime, endTime, totalPrice } = req.body;
+    const court = req.body.courtId || req.body.court;
+    const { startTime, endTime, totalPrice } = req.body;
 
     if (!court || !startTime || !endTime || !totalPrice) {
         return res.status(400).json({ message: 'All fields are required' });
