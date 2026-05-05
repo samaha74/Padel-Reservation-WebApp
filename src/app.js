@@ -3,6 +3,7 @@ const cors = require('cors');
 const connectDB = require('./config/database');
 const bookingRoutes = require('./routes/bookingRoutes');
 const authRoutes = require('./routes/authRoutes');
+const ownerRoutes = require('./routes/ownerRoutes');
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/auth', authRoutes);
 app.use('/bookings', bookingRoutes);
+app.use('/owner', ownerRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
