@@ -19,6 +19,14 @@ const courtSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    surface: {
+        type: String,
+        default: ''
+    },
+    description: {
+        type: String,
+        default: ''
+    },
     isActive: {
         type: Boolean,
         default: true,

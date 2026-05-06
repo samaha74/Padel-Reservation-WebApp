@@ -3,7 +3,12 @@ const cors = require('cors');
 const connectDB = require('./config/database');
 const bookingRoutes = require('./routes/bookingRoutes');
 const authRoutes = require('./routes/authRoutes');
+
 const courtRoutes = require('./routes/courtRoutes');
+
+const ownerRoutes = require('./routes/ownerRoutes');
+
+
 const app = express();
 
 // Connect to database
@@ -13,11 +18,12 @@ connectDB();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use('/courts', courtRoutes);
+
 // Routes
 app.use('/auth', authRoutes);
 app.use('/bookings', bookingRoutes);
-
+app.use('/owner', ownerRoutes);
+app.use('/courts', courtRoutes);
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
