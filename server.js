@@ -1,3 +1,4 @@
+const Court = require('./src/models/Court');
 require('dotenv').config();
 const app = require('./src/app');
 
