@@ -113,15 +113,27 @@ exports.getBookingsByUserId = async (req, res) => {
 
 //Get booking by court id
 exports.getBookingsByCourtId = async (req, res) => {
-    try {
-        const { courtId } = req.query;
-        const bookings = await booking.find({ court: courtId,}).populate('user', 'name email').populate('court');
-        res.status(200).json(bookings);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+  try {
+    const courtId = req.params.courtId || req.query.courtId;
+    if (!courtId) {
+      return res.status(400).json({ message: 'courtId is required' });
     }
-}
 
+    console.log('getBookingsByCourtId courtId=', courtId);
+
+    const bookings = await booking
+      .find({ court: courtId })
+      .populate('user', 'name email')
+      .populate('court');
+
+    console.log('found bookings count=', bookings.length);
+
+    res.status(200).json(bookings);
+  } catch (error) {
+    console.error('getBookingsByCourtId error=', error);
+    res.status(500).json({ message: error.message });
+  }
+};
 // Cancel booking
 exports.cancelBooking = async (req, res) => {
     try {

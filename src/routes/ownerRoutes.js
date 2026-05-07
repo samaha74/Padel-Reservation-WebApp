@@ -1,15 +1,20 @@
 const router = require('express').Router();
 const ownerController = require('../controllers/ownerController');
+const bookingController = require('../controllers/bookingController');
 const { authenticate, authorize } = require('../middleware/authMiddleware');
 
-// All routes require authentication and Owner role
+// authentication Owner role
 router.use(authenticate);
 router.use(authorize('Owner'));
 
-router.post('/courts',authorize('Owner'), ownerController.addCourt);      // → /owner/courts ✓
-router.get('/courts', ownerController.getCourts);      // → /owner/courts ✓
-router.put('/courts/:courtId', authorize('Owner'), ownerController.updateCourt);    // → /owner/courts/:courtId ✓
-router.delete('/courts/:courtId', authorize('Owner'), ownerController.deleteCourt);  // → /owner/courts/:courtId ✓
-router.get('/courts/:courtId',  ownerController.getCourtById);  // → /owner/courts/:courtId ✓
+router.post('/courts',authorize('Owner'), ownerController.addCourt);     
+router.get('/courts', ownerController.getCourts);    
+router.put('/courts/:courtId', authorize('Owner'), ownerController.updateCourt);  
+router.delete('/courts/:courtId', authorize('Owner'), ownerController.deleteCourt);  
+router.get('/courts/:courtId',  ownerController.getCourtById);  
+router.get('/courts/:courtId/bookings', (req, res) => {
+    req.query.courtId = req.params.courtId;
+    return bookingController.getBookingsByCourtId(req, res);
+}); 
 
 module.exports = router;
