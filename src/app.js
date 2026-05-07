@@ -11,26 +11,24 @@ const ownerRoutes = require('./routes/ownerRoutes');
 
 const app = express();
 
-// Connect to database
+
 connectDB();
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
 app.use('/auth', authRoutes);
 app.use('/bookings', bookingRoutes);
 app.use('/owner', ownerRoutes);
 app.use('/courts', courtRoutes);
-// Error handling middleware
+
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ message: 'Something went wrong!' });
 });
 
-// 404 handler
+
 app.use((req, res) => {
     res.status(404).json({ message: 'Route not found' });
 });
