@@ -158,3 +158,30 @@ exports.deleteCourt = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+
+// get court by id
+exports.getCourtById = async (req, res) => {
+    try {
+        const { courtId } = req.params;
+        const court = await Court.findById(courtId);
+
+        if (!court) {
+            return res.status(404).json({ message: 'Court not found' });
+        }
+        res.status(200).json({
+            court: {
+                id: court._id,
+                name: court.name,
+                location: court.location,
+                pricePerHour: court.pricePerHour,
+                surface: court.surface,
+                description: court.description,
+                isActive: court.isActive,
+                createdAt: court.createdAt,
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

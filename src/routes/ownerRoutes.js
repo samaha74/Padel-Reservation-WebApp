@@ -6,9 +6,10 @@ const { authenticate, authorize } = require('../middleware/authMiddleware');
 router.use(authenticate);
 router.use(authorize('Owner'));
 
-router.post('/courts', ownerController.addCourt);      // → /owner/courts ✓
+router.post('/courts',authorize('Owner'), ownerController.addCourt);      // → /owner/courts ✓
 router.get('/courts', ownerController.getCourts);      // → /owner/courts ✓
-router.put('/courts/:courtId', ownerController.updateCourt);    // → /owner/courts/:courtId ✓
-router.delete('/courts/:courtId', ownerController.deleteCourt);  // → /owner/courts/:courtId ✓
+router.put('/courts/:courtId', authorize('Owner'), ownerController.updateCourt);    // → /owner/courts/:courtId ✓
+router.delete('/courts/:courtId', authorize('Owner'), ownerController.deleteCourt);  // → /owner/courts/:courtId ✓
+router.get('/courts/:courtId',  ownerController.getCourtById);  // → /owner/courts/:courtId ✓
 
 module.exports = router;
