@@ -73,31 +73,38 @@ exports.getBookingById = async (req, res) => {
 // Get Booking by date for a specific court
 exports.getBookingsByDate = async (req, res) => {
     try {
-        // 1. Get both date and courtId from the query string
         const { date, courtId } = req.query;
 
-        if (!courtId) {
-            return res.status(400).json({ message: "courtId is required to filter bookings." });
+        // 1. Validation
+        if (!date || !courtId) {
+            return res.status(400).json({ message: "Missing date or courtId" });
         }
 
+        // 2. Date Parsing
         const startOfDay = new Date(date);
+        if (isNaN(startOfDay.getTime())) {
+            return res.status(400).json({ message: "Invalid Date format" });
+        }
+        
         startOfDay.setHours(0, 0, 0, 0);
         
         const endOfDay = new Date(date);
         endOfDay.setHours(23, 59, 59, 999);
 
-        // 2. Add court to the filter object
-        const bookings = await Booking.find({
-            court: courtId, // Filter by the specific court
+        // 3. Query - Note: Ensure your field is 'court' and not 'courtId' in the Schema
+        console.log(`Searching for Court: ${courtId} on ${date}`);
+
+        const bookings = await booking.find({
+            court: courtId, 
             startTime: { $gte: startOfDay, $lte: endOfDay },
-            status: { $ne: 'Cancelled' } // Usually, you don't want to show cancelled ones as "busy"
-        })
-        .populate('user', 'name email')
-        .populate('court');
+            status: { $ne: 'Cancelled' }
+        }).populate('court');
 
         res.status(200).json(bookings);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        // THIS LOG IS VITAL: Check your VS Code terminal/Node console to see this!
+        console.error("CRITICAL ERROR IN getBookingsByDate:", error.message);
+        res.status(500).json({ error: error.message });
     }
 };
 
@@ -121,10 +128,7 @@ exports.getBookingsByCourtId = async (req, res) => {
 
     console.log('getBookingsByCourtId courtId=', courtId);
 
-    const bookings = await booking
-      .find({ court: courtId })
-      .populate('user', 'name email')
-      .populate('court');
+    const bookings = await booking.find({ court: courtId }).populate('user', 'name email').populate('court');
 
     console.log('found bookings count=', bookings.length);
 

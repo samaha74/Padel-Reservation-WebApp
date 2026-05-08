@@ -5,7 +5,6 @@ const { authenticate, authorize } = require('../middleware/authMiddleware');
 
 // authentication Owner role
 router.use(authenticate);
-router.use(authorize('Owner'));
 
 router.post('/courts',authorize('Owner'), ownerController.addCourt);     
 router.get('/courts', ownerController.getCourts);    
