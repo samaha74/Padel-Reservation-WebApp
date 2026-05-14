@@ -2,13 +2,14 @@ const router = require('express').Router();
 const ownerController = require('../controllers/ownerController');
 const bookingController = require('../controllers/bookingController');
 const { authenticate, authorize } = require('../middleware/authMiddleware');
+const uploadCourtImage = require('../middleware/uploadCourtImage');
 
 // authentication Owner role
 router.use(authenticate);
 
-router.post('/courts',authorize('Owner'), ownerController.addCourt);     
-router.get('/courts', ownerController.getCourts);    
-router.put('/courts/:courtId', authorize('Owner'), ownerController.updateCourt);  
+router.post('/courts', authorize('Owner'), uploadCourtImage, ownerController.addCourt);
+router.get('/courts', ownerController.getCourts);
+router.put('/courts/:courtId', authorize('Owner'), uploadCourtImage, ownerController.updateCourt);  
 router.delete('/courts/:courtId', authorize('Owner'), ownerController.deleteCourt);  
 router.get('/courts/:courtId',  ownerController.getCourtById);  
 router.get('/courts/:courtId/bookings', (req, res) => {
