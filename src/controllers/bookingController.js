@@ -90,8 +90,7 @@ exports.getBookingsByDate = async (req, res) => {
         
         const endOfDay = new Date(date);
         endOfDay.setHours(23, 59, 59, 999);
-
-        // 3. Query - Note: Ensure your field is 'court' and not 'courtId' in the Schema
+        
         console.log(`Searching for Court: ${courtId} on ${date}`);
 
         const bookings = await booking.find({
@@ -102,8 +101,6 @@ exports.getBookingsByDate = async (req, res) => {
 
         res.status(200).json(bookings);
     } catch (error) {
-        // THIS LOG IS VITAL: Check your VS Code terminal/Node console to see this!
-        console.error("CRITICAL ERROR IN getBookingsByDate:", error.message);
         res.status(500).json({ error: error.message });
     }
 };
