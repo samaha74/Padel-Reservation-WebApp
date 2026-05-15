@@ -9,11 +9,69 @@ function parsePricePerHour(value) {
 }
 
 function resolveImageUrl(req) {
+    if (req.files && Array.isArray(req.files.image) && req.files.image.length > 0) {
+        return `/uploads/courts/${req.files.image[0].filename}`;
+    }
     if (req.file) {
         return `/uploads/courts/${req.file.filename}`;
     }
     if (typeof req.body.imageUrl === 'string' && req.body.imageUrl.trim() !== '') {
         return req.body.imageUrl.trim();
+    }
+    return null;
+}
+
+function getUploadedFiles(req, fieldName) {
+    if (!req.files || typeof req.files !== 'object') {
+        return [];
+    }
+    const candidates = [fieldName, `${fieldName}[]`];
+    for (const key of candidates) {
+        if (Array.isArray(req.files[key]) && req.files[key].length > 0) {
+            return req.files[key];
+        }
+    }
+    return [];
+}
+
+function normalizeImageArray(value) {
+    if (Array.isArray(value)) {
+        return value.filter((item) => typeof item === 'string' && item.trim() !== '').map((item) => item.trim());
+    }
+    if (typeof value === 'string' && value.trim() !== '') {
+        try {
+            const parsed = JSON.parse(value);
+            if (Array.isArray(parsed)) {
+                return parsed.filter((item) => typeof item === 'string' && item.trim() !== '').map((item) => item.trim());
+            }
+        } catch (_) {
+            return [value.trim()];
+        }
+    }
+    return [];
+}
+
+function uniqueImages(existing, incoming) {
+    const seen = new Set((existing || []).filter((item) => typeof item === 'string').map((item) => item.trim()));
+    const results = [...((existing || []).map((item) => item.trim()))];
+
+    for (const url of incoming || []) {
+        const normalized = typeof url === 'string' ? url.trim() : '';
+        if (normalized && !seen.has(normalized)) {
+            seen.add(normalized);
+            results.push(normalized);
+        }
+    }
+    return results;
+}
+
+function resolveSecondaryImages(req) {
+    const uploaded = getUploadedFiles(req, 'secondaryImages');
+    if (uploaded.length > 0) {
+        return Array.from(new Set(uploaded.map((file) => `/uploads/courts/${file.filename}`)));
+    }
+    if (Object.prototype.hasOwnProperty.call(req.body, 'secondaryImages')) {
+        return normalizeImageArray(req.body.secondaryImages);
     }
     return null;
 }
@@ -53,6 +111,7 @@ exports.addCourt = async (req, res) => {
         }
 
         const imageUrl = resolveImageUrl(req) || '';
+        const secondaryImages = resolveSecondaryImages(req) || [];
 
         const newCourt = new Court({
             user: userId,
@@ -62,6 +121,7 @@ exports.addCourt = async (req, res) => {
             surface,
             description,
             imageUrl,
+            secondaryImages,
             isActive: true
         });
 
@@ -138,6 +198,11 @@ exports.updateCourt = async (req, res) => {
             court.imageUrl = nextImage;
         } else if (Object.prototype.hasOwnProperty.call(req.body, 'imageUrl')) {
             court.imageUrl = typeof req.body.imageUrl === 'string' ? req.body.imageUrl : '';
+        }
+
+        const newSecondaryImages = resolveSecondaryImages(req);
+        if (Array.isArray(newSecondaryImages) && newSecondaryImages.length > 0) {
+            court.secondaryImages = uniqueImages(court.secondaryImages, newSecondaryImages);
         }
 
         await court.save();

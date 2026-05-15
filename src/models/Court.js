@@ -19,21 +19,17 @@ const courtSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
-    surface: {
-        type: String,
-        default: ''
-    },
     description: {
         type: String,
         default: ''
     },
-    // ✅ NEW: court photo URL
     imageUrl: {
         type: String,
         default: ''
     },
     secondaryImages: { 
-        type: [String], default: []
+        type: [String], 
+        default: []
      },
     isActive: {
         type: Boolean,
