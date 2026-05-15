@@ -1,3 +1,6 @@
+# Uploaded court images (generated at runtime)
+uploads/
+
 # Dependencies
 node_modules/
 
