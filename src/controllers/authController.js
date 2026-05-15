@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
+
 const generateToken = (user) => {
     return jwt.sign(
         {
@@ -69,7 +70,7 @@ exports.login = async (req, res) => {
 
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
-            return res.status(401).json({ message: 'Invalid credentials' });
+            return res.status(401).json({ message: 'Invalid credentials'});
         }
 
         const token = generateToken(user);
@@ -87,3 +88,24 @@ exports.login = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+exports.TokenChecker= async (req, res) => {
+    const authHeader = req.headers.authorization || req.headers.Authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Unauthorized: No token provided' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'yourSecretKey');
+        const user = await User.findById(decoded.id).select('-password');   
+        if (!user) {
+            return res.status(401).json({ error: 'Unauthorized: User not found' });
+        }
+
+        res.status(200).json({ user });
+    } catch (error) {
+        return res.status(401).json({ error: 'Unauthorized: Invalid token' });
+    }
+
+}
