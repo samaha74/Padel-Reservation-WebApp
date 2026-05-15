@@ -10,6 +10,10 @@ const courtRoutes = require('./routes/courtRoutes');
 
 const ownerRoutes = require('./routes/ownerRoutes');
 
+const userRoutes = require('./routes/userRoutes');     
+
+const reviewRoutes = require('./routes/reviewRoutes');  
+
 
 const app = express();
 
@@ -22,7 +26,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 app.use('/auth', authRoutes);
+app.use('/user', userRoutes);      
 app.use('/bookings', bookingRoutes);
+app.use('/reviews', reviewRoutes); 
 app.use('/owner', ownerRoutes);
 app.use('/courts', courtRoutes);
 
