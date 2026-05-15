@@ -3,13 +3,20 @@ const PromoCode = require('../models/PromoCode');
 
 // Create a new booking
 exports.createBooking = async (req, res) => {
+    console.log("=== CREATE BOOKING CALLED ===");
+    console.log("REQ USER FULL:", JSON.stringify(req.user));
     try {
         if (!req.user) {
             return res.status(401).json({ message: 'User not authenticated' });
         }
 
+        const userId = req.user._id || req.user.id;
+        console.log("REQ USER:", req.user);
+        console.log("USER ID:", userId);
+
         const courtId = req.body.courtId || req.body.court;
-        const { startTime, endTime, totalPrice, promoCode } = req.body;
+        const { startTime, endTime, totalPrice } = req.body;
+        let promoCode = req.body.promoCode;
 
         if (!courtId || !startTime || !endTime) {
             return res.status(400).json({ message: "Missing required fields" });
@@ -22,7 +29,6 @@ exports.createBooking = async (req, res) => {
             return res.status(400).json({ message: "Invalid date format" });
         }
 
-        // Check overlapping bookings
         const overlappingBooking = await Booking.findOne({
             court: courtId,
             status: { $ne: 'Cancelled' },
@@ -36,24 +42,19 @@ exports.createBooking = async (req, res) => {
             });
         }
 
-        // ================= PROMO CODE =================
         let discountPercent = 0;
         let validPromo = null;
 
-        if (promoCode) {
-            validPromo = await PromoCode.findOne({
-                code: promoCode.toUpperCase(),
-                isActive: true
-            });
+        if (promoCode && promoCode.trim() !== "") {
+            const cleanCode = promoCode.trim().toUpperCase();
+            validPromo = await PromoCode.findOne({ code: cleanCode, isActive: true });
 
             if (!validPromo) {
                 return res.status(400).json({ message: "Invalid promo code" });
             }
-
             if (validPromo.expiresAt && validPromo.expiresAt < new Date()) {
                 return res.status(400).json({ message: "Promo code expired" });
             }
-
             if (validPromo.usedCount >= validPromo.maxUses) {
                 return res.status(400).json({ message: "Promo code fully used" });
             }
@@ -64,19 +65,18 @@ exports.createBooking = async (req, res) => {
         const finalPrice = Math.round(totalPrice * (1 - discountPercent / 100));
 
         const newBooking = new Booking({
-            user: req.user._id,
+            user: userId,
             court: courtId,
             startTime: start,
             endTime: end,
             totalPrice: finalPrice,
-            promoCode: promoCode || null,
-            discountPercent: discountPercent,
-            status: "Pending"
+            promoCode: validPromo ? validPromo.code : null,
+            discountPercent,
+            status: "Upcoming"
         });
 
         await newBooking.save();
 
-        // increase promo usage
         if (validPromo) {
             validPromo.usedCount += 1;
             await validPromo.save();
@@ -88,15 +88,16 @@ exports.createBooking = async (req, res) => {
         });
 
     } catch (error) {
+        console.error("CREATE BOOKING ERROR:", error);
         return res.status(500).json({ message: error.message });
     }
 };
 
-
-// GetAll bookings
+// Get all bookings
 exports.getAllBookings = async (req, res) => {
     try {
-        const filter = req.user.role === 'Admin' ? {} : { user: req.user._id };
+        const userId = req.user._id || req.user.id;
+        const filter = req.user.role === 'Admin' ? {} : { user: userId };
         const bookings = await Booking.find(filter)
             .populate('user', 'name email')
             .populate('court', 'name location');
@@ -106,30 +107,26 @@ exports.getAllBookings = async (req, res) => {
     }
 };
 
-
 // Get booking by ID
 exports.getBookingById = async (req, res) => {
     try {
+        const userId = req.user._id || req.user.id;
         const foundBooking = await Booking.findById(req.params.id)
             .populate('user', 'name email')
             .populate('court');
-
         if (!foundBooking) {
             return res.status(404).json({ message: 'Booking not found' });
         }
-
-        if (!foundBooking.user._id.equals(req.user._id) && req.user.role !== 'Admin') {
+        if (!foundBooking.user._id.equals(userId) && req.user.role !== 'Admin') {
             return res.status(403).json({ message: 'Forbidden: Access denied' });
         }
-
         res.status(200).json(foundBooking);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-
-// Get bookings by date + court
+// Get bookings by date for a specific court
 exports.getBookingsByDate = async (req, res) => {
     try {
         const { date, courtId } = req.query;
@@ -144,7 +141,6 @@ exports.getBookingsByDate = async (req, res) => {
         }
 
         startOfDay.setHours(0, 0, 0, 0);
-
         const endOfDay = new Date(date);
         endOfDay.setHours(23, 59, 59, 999);
 
@@ -155,96 +151,76 @@ exports.getBookingsByDate = async (req, res) => {
         }).populate('court');
 
         res.status(200).json(bookings);
-
     } catch (error) {
-        console.error("getBookingsByDate error:", error.message);
-        res.status(500).json({ message: error.message });
+        console.error("ERROR IN getBookingsByDate:", error.message);
+        res.status(500).json({ error: error.message });
     }
 };
 
-
-// Get bookings by user
+// Get bookings by user id
 exports.getBookingsByUserId = async (req, res) => {
     try {
-        const bookings = await Booking.find({ user: req.user._id })
-            .populate('court');
-
+        const userId = req.user._id || req.user.id;
+        const bookings = await Booking.find({ user: userId }).populate('court');
         res.status(200).json(bookings);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-
-// Get bookings by court
+// Get bookings by court id
 exports.getBookingsByCourtId = async (req, res) => {
     try {
         const courtId = req.params.courtId || req.query.courtId;
-
         if (!courtId) {
             return res.status(400).json({ message: 'courtId is required' });
         }
-
         const bookings = await Booking.find({ court: courtId })
             .populate('user', 'name email')
             .populate('court');
-
         res.status(200).json(bookings);
-
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
-
 
 // Cancel booking
 exports.cancelBooking = async (req, res) => {
     try {
-        const booking = await Booking.findById(req.params.id);
-
-        if (!booking) {
+        const userId = req.user._id || req.user.id;
+        const foundBooking = await Booking.findById(req.params.id);
+        if (!foundBooking) {
             return res.status(404).json({ message: 'Booking not found' });
         }
-
-        if (booking.user.toString() !== req.user._id.toString() && req.user.role !== 'Admin') {
+        if (!foundBooking.user.equals(userId) && req.user.role !== 'Admin') {
             return res.status(403).json({ message: 'Forbidden: Access denied' });
         }
-
-        booking.status = 'Cancelled';
-        await booking.save();
-
+        foundBooking.status = 'Cancelled';
+        await foundBooking.save();
         res.status(200).json({ message: 'Booking cancelled successfully' });
-
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-
 // Update booking
 exports.updateBooking = async (req, res) => {
     try {
-        const booking = await Booking.findById(req.params.id);
-
-        if (!booking) {
+        const userId = req.user._id || req.user.id;
+        const foundBooking = await Booking.findById(req.params.id);
+        if (!foundBooking) {
             return res.status(404).json({ message: 'Booking not found' });
         }
-
-        if (booking.user.toString() !== req.user._id.toString() && req.user.role !== 'Admin') {
+        if (!foundBooking.user.equals(userId) && req.user.role !== 'Admin') {
             return res.status(403).json({ message: 'Forbidden: Access denied' });
         }
-
         const { courtId, court, startTime, endTime, totalPrice } = req.body;
-
-        if (courtId || court) booking.court = courtId || court;
-        if (startTime) booking.startTime = startTime;
-        if (endTime) booking.endTime = endTime;
-        if (totalPrice) booking.totalPrice = totalPrice;
-
-        await booking.save();
-
-        res.status(200).json(booking);
-
+        foundBooking.court = courtId || court || foundBooking.court;
+        foundBooking.startTime = startTime || foundBooking.startTime;
+        foundBooking.endTime = endTime || foundBooking.endTime;
+        foundBooking.totalPrice = totalPrice || foundBooking.totalPrice;
+        await foundBooking.save();
+        res.status(200).json(foundBooking);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
