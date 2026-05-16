@@ -113,12 +113,10 @@ exports.getBookingsByDate = async (req, res) => {
       })
       .populate("court");
 
-        res.status(200).json(bookings);
-
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-
-    }
+    res.status(200).json(bookings);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
 // Get Booking by user id
@@ -164,7 +162,7 @@ exports.cancelBooking = async (req, res) => {
       return res.status(404).json({ message: "Booking not found" });
     }
 
-    if (!foundBooking.user.equals(req.user._id) && req.user.role !== "Admin") {
+    if (!foundBooking.user.equals(req.user._id)) {
       return res.status(403).json({ message: "Forbidden: Access denied" });
     }
 
