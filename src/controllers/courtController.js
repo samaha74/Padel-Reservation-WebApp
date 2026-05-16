@@ -8,7 +8,7 @@ const getCourts = async (req, res) => {
 
         let filter = {};
 
-        // ✅ FIX: search by name (case-insensitive partial match)
+       
         if (name) {
             filter.name = { $regex: name, $options: 'i' };
         }
