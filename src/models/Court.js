@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const courtSchema = new mongoose.Schema({
     user: {
@@ -19,6 +19,7 @@ const courtSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+
     description: {
         type: String,
         default: ''
@@ -28,8 +29,7 @@ const courtSchema = new mongoose.Schema({
         default: ''
     },
     secondaryImages: { 
-        type: [String], 
-        default: []
+        type: [String], default: []
      },
     isActive: {
         type: Boolean,
@@ -42,4 +42,4 @@ const courtSchema = new mongoose.Schema({
     }
 });
 
-module.exports = mongoose.model('Court', courtSchema);
+module.exports = mongoose.model("Court", courtSchema);

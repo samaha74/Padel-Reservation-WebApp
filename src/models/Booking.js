@@ -1,42 +1,55 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const bookingSchema = new mongoose.Schema({
-  // Reference to the User who made the booking (Player)
   user: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+    ref: "User",
+    required: true,
   },
-  // Reference to the Court being booked
   court: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Court',
-    required: true
+    ref: "Court",
+    required: true,
   },
   startTime: {
     type: Date,
-    required: true
+    required: true,
   },
   endTime: {
     type: Date,
-    required: true
+    required: true,
   },
   totalPrice: {
     type: Number,
-    required: true
+    required: true,
   },
+
+  // ✅ UPDATED STATUS (includes payment)
   status: {
     type: String,
-    enum: ['Upcoming', 'Completed', 'Cancelled'],
+    enum: ['Upcoming', 'Completed', 'Cancelled', 'Paid'],
     default: 'Upcoming'
   },
+
+  promoCode: {
+    type: String,
+    default: null,
+  },
+
+  discountPercent: {
+    type: Number,
+    default: 0,
+  },
+
+  reviewed: {
+    type: Boolean,
+    default: false,
+  },
+
   createdAt: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+  },
 });
 
-// To prevent double-bookings, you can't rely on MongoDB unique indexes alone.
-// You will handle the overlap logic in the Controller (Samaha's task).
-
-module.exports = mongoose.model('Booking', bookingSchema);
+module.exports = mongoose.model("Booking", bookingSchema);

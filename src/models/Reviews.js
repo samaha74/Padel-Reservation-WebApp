@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const { use } = require('react');
 
 const reviewSchema = new mongoose.Schema({
     user: {
@@ -21,11 +20,11 @@ const reviewSchema = new mongoose.Schema({
     comment: {
         type: String,
         required: false
-        },
+    },
     createdAt: {
         type: Date,
         default: Date.now
     }
 });
 
-module.exports = mongoose.model('Review', reviewSchema);
+module.exports = mongoose.model("Review", reviewSchema);
