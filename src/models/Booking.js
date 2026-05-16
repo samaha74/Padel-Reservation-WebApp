@@ -23,8 +23,6 @@ const bookingSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-
-  // ✅ UPDATED STATUS (includes payment)
   status: {
     type: String,
     enum: ['Upcoming', 'Completed', 'Cancelled', 'Paid'],

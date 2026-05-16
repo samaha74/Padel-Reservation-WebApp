@@ -1,0 +1,39 @@
+const cron = require("node-cron");
+const Booking = require("../models/Booking");
+
+const startBookingCron = () => {
+
+    // Every minute
+    cron.schedule("* * * * *", async () => {
+
+        try {
+
+            const now = new Date();
+
+            const result = await Booking.updateMany(
+                {
+                    endTime: { $lt: now },
+                    status: { $nin: ["Completed", "Cancelled"] }
+                },
+                {
+                    $set: {
+                        status: "Completed"
+                    }
+                }
+            );
+
+            console.log(
+                `Updated ${result.modifiedCount} bookings`
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Booking cron failed:",
+                error
+            );
+        }
+    });
+};
+
+module.exports = { startBookingCron };
