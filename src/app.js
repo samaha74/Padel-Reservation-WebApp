@@ -10,13 +10,11 @@
 // const courtRoutes = require('./routes/courtRoutes');
 // const ownerRoutes = require('./routes/ownerRoutes');
 
-// const userRoutes = require('./routes/userRoutes');     
+// const userRoutes = require('./routes/userRoutes');
 
-// const reviewRoutes = require('./routes/reviewRoutes');  
-
+// const reviewRoutes = require('./routes/reviewRoutes');
 
 // const app = express();
-
 
 // connectDB();
 
@@ -26,10 +24,10 @@
 // app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // app.use('/auth', authRoutes);
-// // app.use('/user', userRoutes);      
-// app.use('/auth', userRoutes);   
+// // app.use('/user', userRoutes);
+// app.use('/auth', userRoutes);
 // app.use('/bookings', bookingRoutes);
-// app.use('/reviews', reviewRoutes); 
+// app.use('/reviews', reviewRoutes);
 // app.use('/owner', ownerRoutes);
 // app.use('/courts', courtRoutes);
 
@@ -46,7 +44,6 @@
 //     console.error(err.stack);
 //     res.status(500).json({ message: 'Something went wrong!' });
 // });
-
 
 // // Swagger
 // const swaggerOptions = {
@@ -198,37 +195,30 @@
 
 // app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-
 // app.use((req, res) => {
 //     res.status(404).json({ message: 'Route not found' });
 // });
 
 // module.exports = app;
 
+const path = require("path");
+const express = require("express");
+const multer = require("multer");
+const cors = require("cors");
 
+const swaggerJsdoc = require("swagger-jsdoc");
+const swaggerUi = require("swagger-ui-express");
+const connectDB = require("./config/database");
+const bookingRoutes = require("./routes/bookingRoutes");
+const authRoutes = require("./routes/authRoutes");
+const courtRoutes = require("./routes/courtRoutes");
+const ownerRoutes = require("./routes/ownerRoutes");
 
+const paymentRoutes = require("./routes/paymentRoutes");
 
+const userRoutes = require("./routes/userRoutes");
 
-const path = require('path');
-const express = require('express');
-const multer = require('multer');
-const cors = require('cors');
-
-const swaggerJsdoc = require('swagger-jsdoc');
-const swaggerUi = require('swagger-ui-express');
-const connectDB = require('./config/database');
-const bookingRoutes = require('./routes/bookingRoutes');
-const authRoutes = require('./routes/authRoutes');
-const courtRoutes = require('./routes/courtRoutes');
-const ownerRoutes = require('./routes/ownerRoutes');
-
-
-// ✅ PAYMENT ROUTES (NEW)
-const paymentRoutes = require('./routes/paymentRoutes');
-
-const userRoutes = require('./routes/userRoutes');     
-
-const reviewRoutes = require('./routes/reviewRoutes');  
+const reviewRoutes = require("./routes/reviewRoutes");
 
 const app = express();
 
@@ -236,190 +226,194 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
 // Routes
-app.use('/auth', authRoutes);
-app.use("/auth", userRoutes);
-app.use('/bookings', bookingRoutes);
-app.use('/reviews', reviewRoutes); 
-app.use('/owner', ownerRoutes);
-app.use('/courts', courtRoutes);
+app.use("/auth", authRoutes);
+app.use("/user", userRoutes);
+app.use("/bookings", bookingRoutes);
+app.use("/reviews", reviewRoutes);
+app.use("/owner", ownerRoutes);
+app.use("/courts", courtRoutes);
 
 // ✅ PAYMENT ENDPOINTS
-app.use('/payment', paymentRoutes);
+app.use("/payment", paymentRoutes);
 
 // error handler
 app.use((err, req, res, next) => {
-    if (err instanceof multer.MulterError) {
-        if (err.code === 'LIMIT_FILE_SIZE') {
-            return res.status(400).json({ message: 'Image too large (max 5MB)' });
-        }
-        return res.status(400).json({ message: err.message });
+  if (err instanceof multer.MulterError) {
+    if (err.code === "LIMIT_FILE_SIZE") {
+      return res.status(400).json({ message: "Image too large (max 5MB)" });
     }
+    return res.status(400).json({ message: err.message });
+  }
 
-    if (err && err.message === 'Only JPEG, PNG, GIF, or WebP images are allowed') {
-        return res.status(400).json({ message: err.message });
-    }
+  if (
+    err &&
+    err.message === "Only JPEG, PNG, GIF, or WebP images are allowed"
+  ) {
+    return res.status(400).json({ message: err.message });
+  }
 
-    console.error(err.stack);
-    res.status(500).json({ message: 'Something went wrong!' });
+  console.error(err.stack);
+  res.status(500).json({ message: "Something went wrong!" });
 });
-
-
 
 // Swagger
 const swaggerOptions = {
   definition: {
-    openapi: '3.0.0',
+    openapi: "3.0.0",
     info: {
-      title: 'Padel Reservation API',
-      version: '1.0.0',
-      description: 'Swagger documentation for the Padel Reservation WebApp API',
+      title: "Padel Reservation API",
+      version: "1.0.0",
+      description: "Swagger documentation for the Padel Reservation WebApp API",
     },
     servers: [
       {
-        url: 'http://localhost:5000',
+        url: "http://localhost:5000",
       },
     ],
     components: {
       securitySchemes: {
         bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
         },
       },
       schemas: {
         User: {
-          type: 'object',
+          type: "object",
           properties: {
-            id: { type: 'string' },
-            name: { type: 'string' },
-            email: { type: 'string', format: 'email' },
-            role: { type: 'string', enum: ['Player', 'Owner', 'Admin'] },
+            id: { type: "string" },
+            name: { type: "string" },
+            email: { type: "string", format: "email" },
+            role: { type: "string", enum: ["Player", "Owner", "Admin"] },
           },
         },
         RegisterRequest: {
-          type: 'object',
-          required: ['name', 'email', 'password'],
+          type: "object",
+          required: ["name", "email", "password"],
           properties: {
-            name: { type: 'string' },
-            email: { type: 'string', format: 'email' },
-            password: { type: 'string' },
-            role: { type: 'string', enum: ['Player', 'Owner', 'Admin'] },
+            name: { type: "string" },
+            email: { type: "string", format: "email" },
+            password: { type: "string" },
+            role: { type: "string", enum: ["Player", "Owner", "Admin"] },
           },
         },
         LoginRequest: {
-          type: 'object',
-          required: ['email', 'password'],
+          type: "object",
+          required: ["email", "password"],
           properties: {
-            email: { type: 'string', format: 'email' },
-            password: { type: 'string' },
+            email: { type: "string", format: "email" },
+            password: { type: "string" },
           },
         },
         AuthResponse: {
-          type: 'object',
+          type: "object",
           properties: {
             user: {
-              $ref: '#/components/schemas/User',
+              $ref: "#/components/schemas/User",
             },
-            token: { type: 'string' },
+            token: { type: "string" },
           },
         },
         BookingRequest: {
-          type: 'object',
-          required: ['courtId', 'startTime', 'endTime', 'totalPrice'],
+          type: "object",
+          required: ["courtId", "startTime", "endTime", "totalPrice"],
           properties: {
-            courtId: { type: 'string' },
-            startTime: { type: 'string', format: 'date-time' },
-            endTime: { type: 'string', format: 'date-time' },
-            totalPrice: { type: 'number' },
+            courtId: { type: "string" },
+            startTime: { type: "string", format: "date-time" },
+            endTime: { type: "string", format: "date-time" },
+            totalPrice: { type: "number" },
           },
         },
         Booking: {
-          type: 'object',
+          type: "object",
           properties: {
-            _id: { type: 'string' },
-            user: { type: 'string' },
-            court: { type: 'string' },
-            startTime: { type: 'string', format: 'date-time' },
-            endTime: { type: 'string', format: 'date-time' },
-            totalPrice: { type: 'number' },
-            status: { type: 'string', enum: ['Upcoming', 'Completed', 'Cancelled'] },
-            createdAt: { type: 'string', format: 'date-time' },
+            _id: { type: "string" },
+            user: { type: "string" },
+            court: { type: "string" },
+            startTime: { type: "string", format: "date-time" },
+            endTime: { type: "string", format: "date-time" },
+            totalPrice: { type: "number" },
+            status: {
+              type: "string",
+              enum: ["Upcoming", "Completed", "Cancelled"],
+            },
+            createdAt: { type: "string", format: "date-time" },
           },
         },
         BookingListResponse: {
-          type: 'array',
-          items: { $ref: '#/components/schemas/Booking' },
+          type: "array",
+          items: { $ref: "#/components/schemas/Booking" },
         },
         Court: {
-          type: 'object',
+          type: "object",
           properties: {
-            _id: { type: 'string' },
-            name: { type: 'string' },
-            location: { type: 'string' },
-            pricePerHour: { type: 'number' },
-            surface: { type: 'string' },
-            description: { type: 'string' },
-            imageUrl: { type: 'string' },
+            _id: { type: "string" },
+            name: { type: "string" },
+            location: { type: "string" },
+            pricePerHour: { type: "number" },
+            surface: { type: "string" },
+            description: { type: "string" },
+            imageUrl: { type: "string" },
             secondaryImages: {
-              type: 'array',
-              items: { type: 'string' },
+              type: "array",
+              items: { type: "string" },
             },
-            isActive: { type: 'boolean' },
-            createdAt: { type: 'string', format: 'date-time' },
+            isActive: { type: "boolean" },
+            createdAt: { type: "string", format: "date-time" },
           },
         },
         CourtResponse: {
-          type: 'object',
+          type: "object",
           properties: {
-            court: { $ref: '#/components/schemas/Court' },
+            court: { $ref: "#/components/schemas/Court" },
           },
         },
         CourtListResponse: {
-          type: 'object',
+          type: "object",
           properties: {
             courts: {
-              type: 'array',
-              items: { $ref: '#/components/schemas/Court' },
+              type: "array",
+              items: { $ref: "#/components/schemas/Court" },
             },
           },
         },
         OwnerCourtResponse: {
-          type: 'object',
+          type: "object",
           properties: {
-            court: { $ref: '#/components/schemas/Court' },
+            court: { $ref: "#/components/schemas/Court" },
           },
         },
         OwnerCourtsResponse: {
-          type: 'object',
+          type: "object",
           properties: {
             courts: {
-              type: 'array',
-              items: { $ref: '#/components/schemas/Court' },
+              type: "array",
+              items: { $ref: "#/components/schemas/Court" },
             },
           },
         },
         ErrorResponse: {
-          type: 'object',
+          type: "object",
           properties: {
-            message: { type: 'string' },
+            message: { type: "string" },
           },
         },
       },
     },
   },
-  apis: ['./src/routes/*.js'],
+  apis: ["./src/routes/*.js"],
 };
 
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 app.use((req, res) => {
-    res.status(404).json({ message: 'Route not found' });
+  res.status(404).json({ message: "Route not found" });
 });
 
 module.exports = app;

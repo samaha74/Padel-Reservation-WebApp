@@ -218,6 +218,8 @@ const { authenticate } = require("../middleware/authMiddleware");
  */
 router.use(authenticate);
 
+router.get("/my-bookings", bookingController.getMyBookings);
+
 // Get bookings by userId
 router.get("/user/:userId", bookingController.getBookingsByUserId);
 
