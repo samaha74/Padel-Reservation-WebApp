@@ -28,9 +28,6 @@ const courtSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
-    secondaryImages: { 
-        type: [String], default: []
-     },
     isActive: {
         type: Boolean,
         default: true,

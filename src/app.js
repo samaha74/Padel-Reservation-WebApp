@@ -158,10 +158,7 @@ const swaggerOptions = {
             surface: { type: "string" },
             description: { type: "string" },
             imageUrl: { type: "string" },
-            secondaryImages: {
-              type: "array",
-              items: { type: "string" },
-            },
+              // secondaryImages removed
             isActive: { type: "boolean" },
             createdAt: { type: "string", format: "date-time" },
           },

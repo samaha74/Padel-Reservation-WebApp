@@ -49,9 +49,9 @@ const upload = multer({
 /**
  * Expect form fields:
  * - image: single main court photo
- * - secondaryImages: optional array of additional court photos
+ *
  */
 module.exports = upload.fields([
     { name: 'image', maxCount: 1 },
-    { name: 'secondaryImages', maxCount: 10 }
+    // secondary images are no longer supported
 ]);
