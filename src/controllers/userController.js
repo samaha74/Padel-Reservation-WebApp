@@ -3,11 +3,12 @@ const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 
 // ─── GET /auth/me ────────────────────────────────────────────────────────────
-// req.user is already set by authenticate middleware (password excluded)
+// req.user is the JWT payload (plain object), not a Mongoose doc — fetch from DB
 exports.getMe = async (req, res) => {
   try {
-    const { password, ...safeUser } = req.user.toObject();
-    res.status(200).json({ user: safeUser });
+    const user = await User.findById(req.user._id).select("-password");
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.status(200).json({ user });
   } catch (err) {
     console.error("getMe error:", err);
     res.status(500).json({ message: "Server error" });

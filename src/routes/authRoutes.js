@@ -1,5 +1,5 @@
-const router = require('express').Router();
-const authController = require('../controllers/authController');
+const router = require("express").Router();
+const authController = require("../controllers/authController");
 
 /**
  * @openapi
@@ -53,8 +53,20 @@ const authController = require('../controllers/authController');
  *       '401':
  *         description: Invalid credentials
  */
-router.post('/register', authController.register);
-router.post('/login', authController.login);
-router.get('/token-checker', authController.TokenChecker);
+router.post("/register", authController.register);
+router.post("/login", authController.login);
+router.get("/token-checker", authController.TokenChecker);
+
+// ── Profile routes (frontend calls /auth/me) ──────────────────────────────
+const { authenticate } = require("../middleware/authMiddleware");
+const {
+  getMe,
+  updateMe,
+  updatePassword,
+} = require("../controllers/userController");
+
+router.get("/me", authenticate, getMe);
+router.put("/me", authenticate, updateMe);
+router.put("/me/password", authenticate, updatePassword);
 
 module.exports = router;
