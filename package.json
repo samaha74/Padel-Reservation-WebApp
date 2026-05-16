@@ -20,7 +20,9 @@
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.2.0",
     "mongoose": "^9.6.0",
-    "multer": "^2.1.1"
+    "multer": "^2.1.1",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "jest": "^30.4.2",
@@ -30,8 +32,5 @@
   "jest": {
     "testEnvironment": "node",
     "setupFiles": ["<rootDir>/tests/setup.js"]
-    "multer": "^2.1.1",
-    "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1"
   }
 }
