@@ -218,7 +218,7 @@ const uploadCourtImage = require('../middleware/uploadCourtImage');
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 
-// authentication Owner role
+// authentication owner role
 router.use(authenticate);
 
 router.post('/courts', authorize('Owner'), uploadCourtImage, ownerController.addCourt);

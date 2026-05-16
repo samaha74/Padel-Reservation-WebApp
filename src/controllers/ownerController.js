@@ -9,15 +9,15 @@ function parsePricePerHour(value) {
 }
 
 function resolveImageUrl(req) {
-    if (req.files && Array.isArray(req.files.image) && req.files.image.length > 0) {
-        return `/uploads/courts/${req.files.image[0].filename}`;
+    const uploadedFile = req.files?.image?.[0] || req.file;
+    if (uploadedFile?.filename) {
+        return `/uploads/courts/${uploadedFile.filename}`;
     }
-    if (req.file) {
-        return `/uploads/courts/${req.file.filename}`;
-    }
+
     if (typeof req.body.imageUrl === 'string' && req.body.imageUrl.trim() !== '') {
         return req.body.imageUrl.trim();
     }
+
     return null;
 }
 
@@ -66,13 +66,22 @@ function uniqueImages(existing, incoming) {
 }
 
 function resolveSecondaryImages(req) {
+    // Check if secondary images were uploaded via multer
     const uploaded = getUploadedFiles(req, 'secondaryImages');
-    if (uploaded.length > 0) {
-        return Array.from(new Set(uploaded.map((file) => `/uploads/courts/${file.filename}`)));
+    if (uploaded && uploaded.length > 0) {
+        return Array.from(new Set(uploaded.map((file) => {
+            if (file && file.filename) {
+                return `/uploads/courts/${file.filename}`;
+            }
+            return null;
+        }).filter(url => url !== null)));
     }
+    
+    // Check if secondaryImages were provided in request body
     if (Object.prototype.hasOwnProperty.call(req.body, 'secondaryImages')) {
         return normalizeImageArray(req.body.secondaryImages);
     }
+    
     return null;
 }
 
@@ -104,12 +113,6 @@ exports.addCourt = async (req, res) => {
             });
         }
 
-        if (req.user.role !== 'Owner') {
-            return res.status(403).json({
-                message: 'Only court owners can add courts'
-            });
-        }
-
         const imageUrl = resolveImageUrl(req) || '';
         const secondaryImages = resolveSecondaryImages(req) || [];
 
@@ -132,7 +135,8 @@ exports.addCourt = async (req, res) => {
             court: courtResponseDoc(newCourt)
         });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('Error adding court:', error);
+        res.status(500).json({ message: error.message || 'Failed to add court' });
     }
 };
 
@@ -141,19 +145,14 @@ exports.getCourts = async (req, res) => {
     try {
         const userId = req.user.id;
 
-        if (req.user.role !== 'Owner') {
-            return res.status(403).json({
-                message: 'Only court owners can view courts'
-            });
-        }
-
-        const courts = await Court.find({ user: userId }).populate('user', 'name email');
+        const courts = await Court.find({ user: userId });
 
         res.status(200).json({
             courts: courts.map((court) => courtResponseDoc(court))
         });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('Error fetching owner courts:', error);
+        res.status(500).json({ message: error.message || 'Failed to fetch courts' });
     }
 };
 
@@ -164,12 +163,6 @@ exports.updateCourt = async (req, res) => {
         const { name, location, surface, description, isActive } = req.body;
         const pricePerHour = parsePricePerHour(req.body.pricePerHour);
         const userId = req.user.id;
-
-        if (req.user.role !== 'Owner') {
-            return res.status(403).json({
-                message: 'Only court owners can update courts'
-            });
-        }
 
         const court = await Court.findById(courtId);
         if (!court) {
@@ -212,7 +205,8 @@ exports.updateCourt = async (req, res) => {
             court: courtResponseDoc(court)
         });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('Error updating court:', error);
+        res.status(500).json({ message: error.message || 'Failed to update court' });
     }
 };
 
@@ -221,12 +215,6 @@ exports.deleteCourt = async (req, res) => {
     try {
         const { courtId } = req.params;
         const userId = req.user.id;
-
-        if (req.user.role !== 'Owner') {
-            return res.status(403).json({
-                message: 'Only court owners can delete courts'
-            });
-        }
 
         const court = await Court.findById(courtId);
         if (!court) {
@@ -243,7 +231,8 @@ exports.deleteCourt = async (req, res) => {
 
         res.status(200).json({ message: 'Court deleted successfully' });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('Error deleting court:', error);
+        res.status(500).json({ message: error.message || 'Failed to delete court' });
     }
 };
 
@@ -260,6 +249,7 @@ exports.getCourtById = async (req, res) => {
             court: courtResponseDoc(court)
         });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('Error fetching court by ID:', error);
+        res.status(500).json({ message: error.message || 'Failed to fetch court' });
     }
 };
