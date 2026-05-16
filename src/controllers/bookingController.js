@@ -1,5 +1,5 @@
-const Booking = require('../models/Booking');
-const PromoCode = require('../models/PromoCode');
+const booking = require("../models/Booking");
+const { BookingIsValid } = require("../middleware/BookingValidation");
 
 // Create a new booking
 exports.createBooking = async (req, res) => {
@@ -124,31 +124,36 @@ exports.getBookingById = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
-};
+ };
 
-// Get bookings by date for a specific court
+
 exports.getBookingsByDate = async (req, res) => {
-    try {
-        const { date, courtId } = req.query;
+  try {
+    const { date, courtId } = req.query;
 
-        if (!date || !courtId) {
-            return res.status(400).json({ message: "Missing date or courtId" });
-        }
+    // 1. Validation
+    if (!date || !courtId) {
+      return res.status(400).json({ message: "Missing date or courtId" });
+    }
 
-        const startOfDay = new Date(date);
-        if (isNaN(startOfDay.getTime())) {
-            return res.status(400).json({ message: "Invalid Date format" });
-        }
+    // 2. Date Parsing
+    const startOfDay = new Date(date);
+    if (isNaN(startOfDay.getTime())) {
+      return res.status(400).json({ message: "Invalid Date format" });
+    }
 
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(date);
-        endOfDay.setHours(23, 59, 59, 999);
 
-        const bookings = await Booking.find({
-            court: courtId,
-            startTime: { $gte: startOfDay, $lte: endOfDay },
-            status: { $ne: 'Cancelled' }
-        }).populate('court');
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const bookings = await booking
+      .find({
+        court: courtId,
+        startTime: { $gte: startOfDay, $lte: endOfDay },
+        status: { $ne: "Cancelled" },
+      })
+      .populate("court");
 
         res.status(200).json(bookings);
     } catch (error) {
@@ -205,23 +210,24 @@ exports.cancelBooking = async (req, res) => {
 
 // Update booking
 exports.updateBooking = async (req, res) => {
-    try {
-        const userId = req.user._id || req.user.id;
-        const foundBooking = await Booking.findById(req.params.id);
-        if (!foundBooking) {
-            return res.status(404).json({ message: 'Booking not found' });
-        }
-        if (!foundBooking.user.equals(userId) && req.user.role !== 'Admin') {
-            return res.status(403).json({ message: 'Forbidden: Access denied' });
-        }
-        const { courtId, court, startTime, endTime, totalPrice } = req.body;
-        foundBooking.court = courtId || court || foundBooking.court;
-        foundBooking.startTime = startTime || foundBooking.startTime;
-        foundBooking.endTime = endTime || foundBooking.endTime;
-        foundBooking.totalPrice = totalPrice || foundBooking.totalPrice;
-        await foundBooking.save();
-        res.status(200).json(foundBooking);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+  try {
+    const foundBooking = await booking.findById(req.params.id);
+    if (!foundBooking) {
+      return res.status(404).json({ message: "Booking not found" });
     }
+
+    if (!foundBooking.user.equals(req.user._id) && req.user.role !== "Admin") {
+      return res.status(403).json({ message: "Forbidden: Access denied" });
+    }
+
+    const { courtId, court, startTime, endTime, totalPrice } = req.body;
+    foundBooking.court = courtId || court || foundBooking.court;
+    foundBooking.startTime = startTime || foundBooking.startTime;
+    foundBooking.endTime = endTime || foundBooking.endTime;
+    foundBooking.totalPrice = totalPrice || foundBooking.totalPrice;
+    await foundBooking.save();
+    res.status(200).json(foundBooking);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
