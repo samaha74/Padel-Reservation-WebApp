@@ -23,15 +23,19 @@ const bookingSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+
+  // ✅ UPDATED STATUS (includes payment)
   status: {
     type: String,
-    enum: ["Upcoming", "Completed", "Cancelled"],
-    default: "Upcoming",
+    enum: ['Upcoming', 'Completed', 'Cancelled', 'Paid'],
+    default: 'Upcoming'
   },
+
   promoCode: {
     type: String,
     default: null,
   },
+
   discountPercent: {
     type: Number,
     default: 0,
